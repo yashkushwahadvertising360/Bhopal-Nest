@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Registered user profile and role in BhopalNest",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 160 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "role": { "type": "string", "enum": ["tenant", "owner", "partner", "admin"] },
+        "status": { "type": "string", "enum": ["active", "suspended"] },
+        "city": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "role", "status"]
+    },
+    "Property": {
+      "title": "Property",
+      "description": "Rental property listing in Bhopal",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 180 },
+        "type": { "type": "string", "enum": ["Apartment", "Independent House", "Villa", "PG & Hostel", "Studio", "Commercial"] },
+        "locality": { "type": "string", "maxLength": 100 },
+        "city": { "type": "string", "maxLength": 80 },
+        "address": { "type": "string", "maxLength": 300 },
+        "rent": { "type": "number" },
+        "deposit": { "type": "number" },
+        "maintenance": { "type": "number" },
+        "bhk": { "type": "number" },
+        "bathrooms": { "type": "number" },
+        "areaSqFt": { "type": "number" },
+        "furnishing": { "type": "string", "enum": ["Fully Furnished", "Semi Furnished", "Unfurnished"] },
+        "status": { "type": "string", "enum": ["Pending Verification", "Active", "Rejected", "Paused", "Rented"] },
+        "verified": { "type": "boolean" },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "ownerName": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "type", "locality", "rent", "ownerId", "status"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "Tenant inquiry for a property",
+      "type": "object",
+      "properties": {
+        "propertyId": { "type": "string", "maxLength": 128 },
+        "propertyTitle": { "type": "string", "maxLength": 180 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "tenantName": { "type": "string", "maxLength": 120 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["Sent", "Contacted", "Visit Scheduled", "Completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["propertyId", "tenantId", "ownerId", "status"]
+    },
+    "Visit": {
+      "title": "Visit",
+      "description": "Scheduled property visit",
+      "type": "object",
+      "properties": {
+        "propertyId": { "type": "string", "maxLength": 128 },
+        "propertyTitle": { "type": "string", "maxLength": 180 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "visitDate": { "type": "string", "maxLength": 40 },
+        "visitTime": { "type": "string", "maxLength": 40 },
+        "status": { "type": "string", "enum": ["Scheduled", "Rescheduled", "Completed", "Cancelled"] }
+      },
+      "required": ["propertyId", "tenantId", "ownerId", "visitDate", "status"]
+    },
+    "PartnerApplication": {
+      "title": "PartnerApplication",
+      "description": "Rental partner onboarding application",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "email": { "type": "string", "maxLength": 160 },
+        "partnerType": { "type": "string", "maxLength": 80 },
+        "status": { "type": "string", "enum": ["Pending Review", "Approved", "Rejected"] }
+      },
+      "required": ["userId", "fullName", "partnerType", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles with role and contact info"
+    },
+    "/properties/{propertyId}": {
+      "schema": { "$ref": "#/entities/Property" },
+      "description": "Rental property listings in Bhopal"
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Property inquiries from tenants"
+    },
+    "/visits/{visitId}": {
+      "schema": { "$ref": "#/entities/Visit" },
+      "description": "Scheduled property visits"
+    },
+    "/partnerApplications/{appId}": {
+      "schema": { "$ref": "#/entities/PartnerApplication" },
+      "description": "Partner program applications"
+    }
+  }
+}

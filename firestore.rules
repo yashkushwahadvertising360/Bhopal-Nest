@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'yashkushwah.advertising360@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users collection (PII isolated to owner or admin)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isOwner(userId) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.fullName is string && request.resource.data.fullName.size() <= 120 &&
+        request.resource.data.role in ['tenant', 'owner', 'partner'];
+      allow update: if isValidId(userId) && (
+        isAdmin() ||
+        (isOwner(userId) && request.resource.data.uid == resource.data.uid && request.resource.data.role == resource.data.role)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Properties collection (publicly readable active listings; owners & admins can write)
+    match /properties/{propertyId} {
+      allow get, list: if true;
+      allow create: if isValidId(propertyId) && isSignedIn() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.title is string && request.resource.data.title.size() <= 180 &&
+        request.resource.data.rent is number && request.resource.data.rent > 0;
+      allow update: if isValidId(propertyId) && isSignedIn() && (
+        isAdmin() ||
+        (resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == resource.data.ownerId)
+      );
+      allow delete: if isValidId(propertyId) && isSignedIn() && (
+        isAdmin() || resource.data.ownerId == request.auth.uid
+      );
+    }
+
+    // Inquiries collection
+    match /inquiries/{inquiryId} {
+      allow get: if isValidId(inquiryId) && isSignedIn() && (
+        isAdmin() || resource.data.tenantId == request.auth.uid || resource.data.ownerId == request.auth.uid
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() || resource.data.tenantId == request.auth.uid || resource.data.ownerId == request.auth.uid
+      );
+      allow create: if isValidId(inquiryId) && isSignedIn() &&
+        request.resource.data.tenantId == request.auth.uid &&
+        request.resource.data.propertyId is string && request.resource.data.propertyId.size() <= 128;
+      allow update: if isValidId(inquiryId) && isSignedIn() && (
+        isAdmin() || resource.data.ownerId == request.auth.uid || resource.data.tenantId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Visits collection
+    match /visits/{visitId} {
+      allow get: if isValidId(visitId) && isSignedIn() && (
+        isAdmin() || resource.data.tenantId == request.auth.uid || resource.data.ownerId == request.auth.uid
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() || resource.data.tenantId == request.auth.uid || resource.data.ownerId == request.auth.uid
+      );
+      allow create: if isValidId(visitId) && isSignedIn() &&
+        request.resource.data.tenantId == request.auth.uid;
+      allow update: if isValidId(visitId) && isSignedIn() && (
+        isAdmin() || resource.data.tenantId == request.auth.uid || resource.data.ownerId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Partner Applications
+    match /partnerApplications/{appId} {
+      allow get: if isValidId(appId) && isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isValidId(appId) && isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Connection test document
+    match /test/connection {
+      allow get: if true;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "BhopalNest",
+  "description": "Premium rental property platform for Bhopal, Madhya Pradesh. Discover verified flats, independent houses, villas, PGs, and commercial spaces across Bhopal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
